@@ -5,17 +5,13 @@ export default function setting(option) {
         ...option,
         tooltip: art.i18n.get('Show Setting'),
         mounted: ($control) => {
-            const {
-                events: { proxy },
-                icons,
-                i18n,
-                setting,
-            } = art;
+            const { proxy, icons, i18n } = art;
 
             append($control, icons.setting);
 
             proxy($control, 'click', () => {
-                setting.toggle = true;
+                art.setting.toggle();
+                art.setting.resize();
             });
 
             art.on('setting', (value) => {

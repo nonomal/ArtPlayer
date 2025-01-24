@@ -1,40 +1,42 @@
-import { inverseClass, queryAll } from '../utils';
+import { capitalize } from '../utils';
 
 export default function flip(art) {
-    const { i18n, icons, constructor } = art;
+    const {
+        i18n,
+        icons,
+        constructor: { SETTING_ITEM_WIDTH, FLIP },
+    } = art;
 
-    const keys = {
-        normal: 'Normal',
-        horizontal: 'Horizontal',
-        vertical: 'Vertical',
-    };
+    function getI18n(value) {
+        return i18n.get(capitalize(value));
+    }
 
-    function update($panel, $tooltip, value) {
-        if ($tooltip) $tooltip.innerText = i18n.get(keys[value]);
-        const $current = queryAll('.art-setting-item', $panel).find((item) => item.dataset.value === value);
-        if ($current) inverseClass($current, 'art-current');
+    function update() {
+        const target = art.setting.find(`flip-${art.flip}`);
+        art.setting.check(target);
     }
 
     return {
-        width: constructor.SETTING_ITEM_WIDTH,
+        width: SETTING_ITEM_WIDTH,
+        name: 'flip',
         html: i18n.get('Video Flip'),
-        tooltip: i18n.get(keys[art.flip]),
-        icon: icons.config,
-        selector: Object.keys(keys).map((item) => {
+        tooltip: getI18n(art.flip),
+        icon: icons.flip,
+        selector: FLIP.map((item) => {
             return {
                 value: item,
+                name: `flip-${item}`,
                 default: item === art.flip,
-                html: i18n.get(keys[item]),
+                html: getI18n(item),
             };
         }),
         onSelect(item) {
             art.flip = item.value;
+            return item.html;
         },
-        mounted: ($panel, item) => {
-            update($panel, item._$tooltip, art.flip);
-            art.on('flip', () => {
-                update($panel, item._$tooltip, art.flip);
-            });
+        mounted: () => {
+            update();
+            art.on('flip', () => update());
         },
     };
 }

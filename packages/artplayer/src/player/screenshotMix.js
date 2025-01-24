@@ -1,13 +1,12 @@
-import { secondToTime, download, def } from '../utils';
+import { secondToTime, download, def, createElement } from '../utils';
 
 export default function screenshotMix(art) {
     const {
-        option,
         notice,
         template: { $video },
     } = art;
 
-    const $canvas = document.createElement('canvas');
+    const $canvas = createElement('canvas');
 
     def(art, 'getDataURL', {
         value: () =>
@@ -42,12 +41,12 @@ export default function screenshotMix(art) {
     });
 
     def(art, 'screenshot', {
-        value: () => {
-            return art.getDataURL().then((dataUri) => {
-                download(dataUri, `${option.title || 'artplayer'}_${secondToTime($video.currentTime)}.png`);
-                art.emit('screenshot', dataUri);
-                return dataUri;
-            });
+        value: async (name) => {
+            const dataUri = await art.getDataURL();
+            const fileName = name || `artplayer_${secondToTime($video.currentTime)}`;
+            download(dataUri, `${fileName}.png`);
+            art.emit('screenshot', dataUri);
+            return dataUri;
         },
     });
 }

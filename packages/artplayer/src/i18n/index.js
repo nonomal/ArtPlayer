@@ -1,15 +1,17 @@
 import { mergeDeep } from '../utils';
-import zhCn from './zh-cn.json';
-import zhTw from './zh-tw.json';
+import zhCn from './zh-cn';
 
 export default class I18n {
     constructor(art) {
         this.art = art;
+
         this.languages = {
             'zh-cn': zhCn,
-            'zh-tw': zhTw,
         };
-        this.init();
+
+        this.language = {};
+
+        this.update(art.option.i18n);
     }
 
     init() {

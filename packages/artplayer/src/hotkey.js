@@ -5,48 +5,55 @@ export default class Hotkey {
         this.art = art;
         this.keys = {};
 
-        art.once('video:loadedmetadata', () => {
-            if (art.option.hotkey && !isMobile) {
-                this.init();
-            }
-        });
+        if (art.option.hotkey && !isMobile) {
+            this.init();
+        }
     }
 
     init() {
-        const { proxy } = this.art.events;
+        const { proxy, constructor } = this.art;
 
-        this.add(27, () => {
+        this.add('Escape', () => {
             if (this.art.fullscreenWeb) {
                 this.art.fullscreenWeb = false;
             }
         });
 
-        this.add(32, () => {
+        this.add('Space', () => {
             this.art.toggle();
         });
 
-        this.add(37, () => {
-            this.art.backward = 5;
+        this.add('ArrowLeft', () => {
+            this.art.backward = constructor.SEEK_STEP;
         });
 
-        this.add(38, () => {
-            this.art.volume += 0.1;
+        this.add('ArrowUp', () => {
+            this.art.volume += constructor.VOLUME_STEP;
         });
 
-        this.add(39, () => {
-            this.art.forward = 5;
+        this.add('ArrowRight', () => {
+            this.art.forward = constructor.SEEK_STEP;
         });
 
-        this.add(40, () => {
-            this.art.volume -= 0.1;
+        this.add('ArrowDown', () => {
+            this.art.volume -= constructor.VOLUME_STEP;
         });
 
-        proxy(window, 'keydown', (event) => {
+        proxy(document, 'keydown', (event) => {
             if (this.art.isFocus) {
                 const tag = document.activeElement.tagName.toUpperCase();
                 const editable = document.activeElement.getAttribute('contenteditable');
-                if (tag !== 'INPUT' && tag !== 'TEXTAREA' && editable !== '' && editable !== 'true') {
-                    const events = this.keys[event.keyCode];
+                if (
+                    tag !== 'INPUT' &&
+                    tag !== 'TEXTAREA' &&
+                    editable !== '' &&
+                    editable !== 'true' &&
+                    !event.altKey &&
+                    !event.ctrlKey &&
+                    !event.metaKey &&
+                    !event.shiftKey
+                ) {
+                    const events = this.keys[event.code];
                     if (events) {
                         event.preventDefault();
                         for (let index = 0; index < events.length; index++) {
@@ -56,6 +63,7 @@ export default class Hotkey {
                     }
                 }
             }
+            this.art.emit('keydown', event);
         });
     }
 

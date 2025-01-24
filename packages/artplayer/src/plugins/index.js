@@ -20,7 +20,7 @@ export default class Plugins {
             this.add(lock);
         }
 
-        if (option.autoPlayback) {
+        if (option.autoPlayback && !option.isLive) {
             this.add(autoPlayback);
         }
 
@@ -39,7 +39,15 @@ export default class Plugins {
 
     add(plugin) {
         this.id += 1;
-        const result = plugin.call(this, this.art);
+        const result = plugin.call(this.art, this.art);
+        if (result instanceof Promise) {
+            return result.then((res) => this.next(plugin, res));
+        } else {
+            return this.next(plugin, result);
+        }
+    }
+
+    next(plugin, result) {
         const pluginName = (result && result.name) || plugin.name || `plugin${this.id}`;
         errorHandle(!has(this, pluginName), `Cannot add a plugin that already has the same name: ${pluginName}`);
         def(this, pluginName, {

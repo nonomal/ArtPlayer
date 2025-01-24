@@ -20,7 +20,9 @@
   <span>・</span>
   <a href="https://artplayer.org/document">API Document</a>
   <span>・</span>
-  <a href="https://artplayer.org/?libs=.%2Funcompiled%2Fartplayer-plugin-danmuku.js&example=danmuku">弹幕演示</a>
+  <a href="https://artplayer.org/?libs=./uncompiled/artplayer-plugin-danmuku/index.js&example=danmuku">弹幕演示</a>
+  <span>・</span>
+  <a href="./CHANGELOG_CN.md">更新记录</a>
   <span>・</span>
 </p>
 
@@ -31,9 +33,11 @@
 </p>
 
 ## Home Page
+
 [https://artplayer.org](https://artplayer.org)
 
 ## Mobile Demo
+
 <img src="./images/qrcode.png" width="250">
 
 ## Features
@@ -88,6 +92,44 @@ var art = new Artplayer({
     url: 'path/to/video.mp4',
 });
 ```
+
+## Plugins
+
+-   [artplayer-plugin-danmuku](https://artplayer.org/?libs=./uncompiled/artplayer-plugin-danmuku/index.js&example=danmuku)
+-   [artplayer-plugin-danmuku-mask](https://artplayer.org/?libs=./uncompiled/artplayer-plugin-danmuku/index.js%0A./uncompiled/artplayer-plugin-danmuku-mask/index.js&example=danmuku.mask) (WIP)
+-   [artplayer-plugin-ads](https://artplayer.org/?libs=./uncompiled/artplayer-plugin-ads/index.js&example=ads) (WIP)
+-   [artplayer-plugin-iframe](https://artplayer.org/?libs=./uncompiled/artplayer-plugin-iframe/index.js&example=iframe)
+-   [artplayer-plugin-hls-control](https://artplayer.org/?libs=https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.17/hls.min.js%0A./uncompiled/artplayer-plugin-hls-control/index.js&example=hls.control)
+-   [artplayer-plugin-dash-control](https://artplayer.org/?libs=https://cdnjs.cloudflare.com/ajax/libs/dashjs/4.5.2/dash.all.min.js%0A./uncompiled/artplayer-plugin-dash-control/index.js&example=dash.control)
+-   [artplayer-plugin-vtt-thumbnail](https://artplayer.org/?libs=./uncompiled/artplayer-plugin-vtt-thumbnail/index.js&example=vtt.thumbnail)
+-   [artplayer-plugin-multiple-subtitles](https://artplayer.org/?libs=./uncompiled/artplayer-plugin-multiple-subtitles/index.js&example=multiple.subtitles)
+-   [artplayer-plugin-libass](https://artplayer.org/?libs=./uncompiled/artplayer-plugin-libass/index.js&example=libass)
+-   [artplayer-plugin-chromecast](https://artplayer.org/?libs=./uncompiled/artplayer-plugin-chromecast/index.js&example=chromecast)
+-   [artplayer-plugin-vast](https://artplayer.org/?libs=./uncompiled/artplayer-plugin-vast/index.js&example=vast)
+-   [artplayer-plugin-chapter](https://artplayer.org/?libs=./uncompiled/artplayer-plugin-chapter/index.js&example=chapter)
+-   [artplayer-plugin-auto-thumbnail](https://artplayer.org/?libs=./uncompiled/artplayer-plugin-auto-thumbnail/index.js&example=auto.thumbnail)
+-   [artplayer-plugin-ambilight](https://artplayer.org/?libs=./uncompiled/artplayer-plugin-ambilight/index.js&example=ambilight)
+
+## Libraries
+
+-   [hls.js](https://artplayer.org/?libs=https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.17/hls.min.js&example=hls)
+-   [dash.js](https://artplayer.org/?libs=https://cdnjs.cloudflare.com/ajax/libs/dashjs/4.5.2/dash.all.min.js&example=dash)
+-   [flv.js](https://artplayer.org/?libs=https://cdnjs.cloudflare.com/ajax/libs/flv.js/1.6.2/flv.min.js&example=flv)
+-   [mpegts.js](https://artplayer.org/?libs=https://cdn.jsdelivr.net/npm/mpegts.js@1.7.3/dist/mpegts.min.js&example=mpegts)
+-   [webtorrent.js](https://artplayer.org/?libs=https://cdn.jsdelivr.net/npm/webtorrent@1/webtorrent.min.js&example=webtorrent)
+
+## Proxys
+
+-   [Canvas](https://artplayer.org/?libs=./uncompiled/artplayer-proxy-canvas/index.js&example=canvas)
+-   [WebAV](https://artplayer.org/?libs=./uncompiled/artplayer-proxy-webav/index.js&example=webav) (WIP)
+
+## Changelog
+
+[CHANGELOG_CN.md](./CHANGELOG_CN.md)
+
+## Contributing
+
+[CONTRIBUTING.md](./CONTRIBUTING.md)
 
 ## Donations
 

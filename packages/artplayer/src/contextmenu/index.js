@@ -1,4 +1,4 @@
-import { setStyles, includeFromEvent, isMobile } from '../utils';
+import { setStyles, includeFromEvent, isMobile, getRect } from '../utils';
 import Component from '../utils/component';
 import playbackRate from './playbackRate';
 import aspectRatio from './aspectRatio';
@@ -11,51 +11,50 @@ export default class Contextmenu extends Component {
     constructor(art) {
         super(art);
 
-        this.art = art;
         this.name = 'contextmenu';
         this.$parent = art.template.$contextmenu;
 
-        art.once('video:loadedmetadata', () => {
-            if (!isMobile) {
-                this.init();
-            }
-        });
+        if (!isMobile) {
+            this.init();
+        }
     }
 
     init() {
         const {
             option,
+            proxy,
             template: { $player, $contextmenu },
-            events: { proxy },
         } = this.art;
 
-        this.add(
-            playbackRate({
-                disable: !option.playbackRate,
-                name: 'playbackRate',
-                index: 10,
-            }),
-        );
+        if (option.playbackRate) {
+            this.add(
+                playbackRate({
+                    name: 'playbackRate',
+                    index: 10,
+                }),
+            );
+        }
 
-        this.add(
-            aspectRatio({
-                disable: !option.aspectRatio,
-                name: 'aspectRatio',
-                index: 20,
-            }),
-        );
+        if (option.aspectRatio) {
+            this.add(
+                aspectRatio({
+                    name: 'aspectRatio',
+                    index: 20,
+                }),
+            );
+        }
 
-        this.add(
-            flip({
-                disable: !option.flip,
-                name: 'flip',
-                index: 30,
-            }),
-        );
+        if (option.flip) {
+            this.add(
+                flip({
+                    name: 'flip',
+                    index: 30,
+                }),
+            );
+        }
 
         this.add(
             info({
-                disable: false,
                 name: 'info',
                 index: 40,
             }),
@@ -63,7 +62,6 @@ export default class Contextmenu extends Component {
 
         this.add(
             version({
-                disable: false,
                 name: 'version',
                 index: 50,
             }),
@@ -71,7 +69,6 @@ export default class Contextmenu extends Component {
 
         this.add(
             close({
-                disable: false,
                 name: 'close',
                 index: 60,
             }),
@@ -82,13 +79,15 @@ export default class Contextmenu extends Component {
         }
 
         proxy($player, 'contextmenu', (event) => {
+            if (!this.art.constructor.CONTEXTMENU) return;
             event.preventDefault();
+
             this.show = true;
 
             const mouseX = event.clientX;
             const mouseY = event.clientY;
-            const { height: cHeight, width: cWidth, left: cLeft, top: cTop } = $player.getBoundingClientRect();
-            const { height: mHeight, width: mWidth } = $contextmenu.getBoundingClientRect();
+            const { height: cHeight, width: cWidth, left: cLeft, top: cTop } = getRect($player);
+            const { height: mHeight, width: mWidth } = getRect($contextmenu);
             let menuLeft = mouseX - cLeft;
             let menuTop = mouseY - cTop;
 

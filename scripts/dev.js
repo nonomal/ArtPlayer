@@ -1,62 +1,98 @@
-const inquirer = require('inquirer');
-const rollup = require('rollup');
-const servor = require('servor');
-const logger = require('./logger');
-const projects = require('./getProjects')();
-const creatRollupConfig = require('./creatRollupConfig');
-const openBrowser = require('servor/utils/openBrowser');
+import fs from 'fs';
+import path from 'path';
+import servor from 'servor';
+import prompts from 'prompts';
+import { fileURLToPath } from 'url';
+import { Parcel } from '@parcel/core';
+import { formatDate, getProjects } from './utils.js';
+import openBrowser from 'servor/utils/openBrowser.js';
 
-async function develop(projectPath) {
-    const config = creatRollupConfig(projectPath);
-    const { url } = await servor({
+const projects = getProjects();
+
+async function develop(name) {
+    let isOpenBrowser = false;
+    const uncompiledPath = path.resolve(`docs/uncompiled/${name}`);
+
+    const projectPackageJson = path.join(projects[name], 'package.json');
+    const { version } = JSON.parse(fs.readFileSync(projectPackageJson, 'utf-8'));
+
+    const serverConfig = {
         root: 'docs',
         fallback: 'index.html',
         reload: true,
-        port: 8081,
-    });
-    openBrowser(url);
-    const watcher = rollup.watch(config);
-    watcher.on('event', (event) => {
-        switch (event.code) {
-            case 'START':
-                logger.log('checking rollup version...');
-                break;
-            case 'BUNDLE_START':
-                logger.log(`bundling ${config.output.file}...`);
-                break;
-            case 'BUNDLE_END':
-                logger.success(`${config.output.file} bundled in ${event.duration}ms.`);
-                logger.success('Watching for changes...');
-                break;
-            case 'END':
-                logger.success('finished building all bundles');
-                break;
-            case 'ERROR':
-                logger.warn(`error: ${event.error}`);
-                break;
-            case 'FATAL':
-                logger.warn(`fatal: ${event.error}`);
-                break;
-            default:
-                logger.warn(`unknown event: ${event.code}`);
-        }
-    });
+        port: 8082,
+    };
+
+    try {
+        const { url } = await servor(serverConfig);
+        process.chdir(projects[name]);
+
+        const bundlerConfig = {
+            entries: `${projects[name]}/src/index.js`,
+            defaultConfig: '@parcel/config-default',
+            mode: 'development',
+            targets: {
+                main: {
+                    distDir: uncompiledPath,
+                    outputFormat: 'global',
+                    engines: {
+                        browsers: ['last 1 Chrome version'],
+                    },
+                },
+            },
+            env: {
+                NODE_ENV: 'development',
+                APP_VER: version,
+                BUILD_DATE: formatDate(Date.now()),
+            },
+            additionalReporters: [
+                {
+                    packageName: '@parcel/reporter-cli',
+                    resolveFrom: fileURLToPath(import.meta.url),
+                },
+            ],
+        };
+
+        const bundler = new Parcel(bundlerConfig);
+
+        bundler.watch((error, event) => {
+            if (error) {
+                console.error(`Build error: ${error}`);
+                return;
+            }
+            if (event.type === 'buildSuccess') {
+                const bundles = event.bundleGraph.getBundles();
+                console.log(`[${name}] ✨ Built ${bundles.length} bundles in ${event.buildTime}ms!`);
+                if (!isOpenBrowser) {
+                    isOpenBrowser = true;
+                    openBrowser(url);
+                }
+            } else if (event.type === 'buildFailure') {
+                console.error(`[${name}] Build failure:`, event.diagnostics);
+            }
+        });
+    } catch (error) {
+        console.error(`Failed to start development server for ${name}: ${error.message}`);
+    }
 }
 
-inquirer
-    .prompt([
-        {
-            type: 'list',
+(async () => {
+    try {
+        const response = await prompts({
+            type: 'select',
+            name: 'value',
             message: 'Which project do you want to develop?',
-            name: 'project',
-            choices: Object.keys(projects),
-        },
-    ])
-    .then((answers) => {
-        develop(projects[answers.project]);
-    })
-    .catch((err) => {
-        logger.fatal(err);
-    });
+            choices: Object.keys(projects).map((name) => ({
+                title: name,
+                value: name,
+            })),
+            initial: 0,
+        });
 
-module.exports = develop;
+        if (response.value) {
+            develop(response.value);
+        }
+    } catch (error) {
+        console.error(`Prompt error: ${error.message}`);
+    }
+})();
