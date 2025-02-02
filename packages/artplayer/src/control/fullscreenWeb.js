@@ -1,24 +1,30 @@
-import { append, tooltip } from '../utils';
+import { append, tooltip, setStyle } from '../utils';
 
 export default function fullscreenWeb(option) {
     return (art) => ({
         ...option,
         tooltip: art.i18n.get('Web Fullscreen'),
         mounted: ($control) => {
-            const {
-                events: { proxy },
-                icons,
-                i18n,
-            } = art;
+            const { proxy, icons, i18n } = art;
 
-            append($control, icons.fullscreenWeb);
+            const $fullscreenWebOn = append($control, icons.fullscreenWebOn);
+            const $fullscreenWebOff = append($control, icons.fullscreenWebOff);
+            setStyle($fullscreenWebOff, 'display', 'none');
 
             proxy($control, 'click', () => {
                 art.fullscreenWeb = !art.fullscreenWeb;
             });
 
             art.on('fullscreenWeb', (value) => {
-                tooltip($control, i18n.get(value ? 'Exit Web Fullscreen' : 'Web Fullscreen'));
+                if (value) {
+                    tooltip($control, i18n.get('Exit Web Fullscreen'));
+                    setStyle($fullscreenWebOn, 'display', 'none');
+                    setStyle($fullscreenWebOff, 'display', 'inline-flex');
+                } else {
+                    tooltip($control, i18n.get('Web Fullscreen'));
+                    setStyle($fullscreenWebOn, 'display', 'inline-flex');
+                    setStyle($fullscreenWebOff, 'display', 'none');
+                }
             });
         },
     });

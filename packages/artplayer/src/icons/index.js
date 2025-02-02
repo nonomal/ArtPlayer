@@ -1,24 +1,31 @@
-import { append, def, addClass } from '../utils';
-import loading from './loading.svg';
-import state from './state.svg';
-import check from './check.svg';
-import play from './play.svg';
-import pause from './pause.svg';
-import volume from './volume.svg';
-import volumeClose from './volume-close.svg';
-import subtitle from './subtitle.svg';
-import screenshot from './screenshot.svg';
-import setting from './setting.svg';
-import fullscreen from './fullscreen.svg';
-import fullscreenWeb from './fullscreen-web.svg';
-import arrowLeft from './arrow-left.svg';
-import arrowRight from './arrow-right.svg';
-import playbackRate from './playback-rate.svg';
-import aspectRatio from './aspect-ratio.svg';
-import config from './config.svg';
-import pip from './pip.svg';
-import lock from './lock.svg';
-import unlock from './unlock.svg';
+import { def, getIcon } from '../utils';
+import loading from 'bundle-text:./loading.svg';
+import state from 'bundle-text:./state.svg';
+import check from 'bundle-text:./check.svg';
+import play from 'bundle-text:./play.svg';
+import pause from 'bundle-text:./pause.svg';
+import volume from 'bundle-text:./volume.svg';
+import volumeClose from 'bundle-text:./volume-close.svg';
+import screenshot from 'bundle-text:./screenshot.svg';
+import setting from 'bundle-text:./setting.svg';
+import arrowLeft from 'bundle-text:./arrow-left.svg';
+import arrowRight from 'bundle-text:./arrow-right.svg';
+import playbackRate from 'bundle-text:./playback-rate.svg';
+import aspectRatio from 'bundle-text:./aspect-ratio.svg';
+import config from 'bundle-text:./config.svg';
+import pip from 'bundle-text:./pip.svg';
+import lock from 'bundle-text:./lock.svg';
+import unlock from 'bundle-text:./unlock.svg';
+import fullscreenOff from 'bundle-text:./fullscreen-off.svg';
+import fullscreenOn from 'bundle-text:./fullscreen-on.svg';
+import fullscreenWebOff from 'bundle-text:./fullscreen-web-off.svg';
+import fullscreenWebOn from 'bundle-text:./fullscreen-web-on.svg';
+import switchOn from 'bundle-text:./switch-on.svg';
+import switchOff from 'bundle-text:./switch-off.svg';
+import flip from 'bundle-text:./flip.svg';
+import error from 'bundle-text:./error.svg';
+import close from 'bundle-text:./close.svg';
+import airplay from 'bundle-text:./airplay.svg';
 
 export default class Icons {
     constructor(art) {
@@ -30,11 +37,8 @@ export default class Icons {
             check,
             volume,
             volumeClose,
-            subtitle,
             screenshot,
             setting,
-            fullscreen,
-            fullscreenWeb,
             pip,
             arrowLeft,
             arrowRight,
@@ -42,20 +46,24 @@ export default class Icons {
             aspectRatio,
             config,
             lock,
+            flip,
             unlock,
+            fullscreenOff,
+            fullscreenOn,
+            fullscreenWebOff,
+            fullscreenWebOn,
+            switchOn,
+            switchOff,
+            error,
+            close,
+            airplay,
             ...art.option.icons,
         };
 
-        Object.keys(icons).forEach((key) => {
+        for (const key in icons) {
             def(this, key, {
-                get: () => {
-                    const icon = document.createElement('i');
-                    addClass(icon, 'art-icon');
-                    addClass(icon, `art-icon-${key}`);
-                    append(icon, icons[key]);
-                    return icon;
-                },
+                get: () => getIcon(key, icons[key]),
             });
-        });
+        }
     }
 }

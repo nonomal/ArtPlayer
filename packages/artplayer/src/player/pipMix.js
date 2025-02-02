@@ -3,7 +3,7 @@ import { def } from '../utils';
 function nativePip(art) {
     const {
         template: { $video },
-        events: { proxy },
+        proxy,
         notice,
     } = art;
 
@@ -15,6 +15,7 @@ function nativePip(art) {
         },
         set(value) {
             if (value) {
+                art.state = 'pip';
                 $video.requestPictureInPicture().catch((err) => {
                     notice.show = err;
                     throw err;
@@ -33,7 +34,7 @@ function nativePip(art) {
     });
 
     proxy($video, 'leavepictureinpicture', () => {
-        art.emit('pip');
+        art.emit('pip', false);
     });
 }
 
@@ -48,11 +49,12 @@ function webkitPip(art) {
         },
         set(value) {
             if (value) {
+                art.state = 'pip';
                 $video.webkitSetPresentationMode('picture-in-picture');
                 art.emit('pip', true);
             } else {
                 $video.webkitSetPresentationMode('inline');
-                art.emit('pip');
+                art.emit('pip', false);
             }
         },
     });

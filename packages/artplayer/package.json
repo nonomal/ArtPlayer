@@ -1,30 +1,27 @@
 {
+    "license": "MIT",
     "name": "artplayer",
-    "version": "4.3.11",
-    "expose": "Artplayer",
-    "description": "ArtPlayer.js is a modern and full featured HTML5 video player",
+    "version": "5.2.2",
     "main": "dist/artplayer.js",
+    "legacy": "dist/artplayer.legacy.js",
     "types": "types/artplayer.d.ts",
-    "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1"
-    },
+    "homepage": "https://artplayer.org",
+    "author": "Harvey Zack <laozhaochaguan@gmail.com>",
+    "browserslist": "last 1 Chrome version",
+    "description": "ArtPlayer.js is a modern and full featured HTML5 video player",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/zhw2590582/ArtPlayer.git"
     },
-    "keywords": [
-        "video",
-        "player"
-    ],
-    "author": "Harvey Zack <laozhaochaguan@gmail.com>",
-    "license": "MIT",
     "bugs": {
         "url": "https://github.com/zhw2590582/ArtPlayer/issues"
     },
-    "homepage": "https://github.com/zhw2590582/ArtPlayer#readme",
+    "keywords": [
+        "html5",
+        "video",
+        "player"
+    ],
     "dependencies": {
-        "option-validator": "^2.0.6",
-        "screenfull": "^6.0.1"
-    },
-    "gitHead": "5ea211ef738351668e4acace326af4ff6947e2ee"
+        "option-validator": "^2.0.6"
+    }
 }

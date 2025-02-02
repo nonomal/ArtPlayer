@@ -1,9 +1,9 @@
-import { query, clamp, append, setStyle, setStyles, secondToTime, includeFromEvent, isMobile } from '../utils';
+import { query, clamp, append, setStyle, secondToTime, includeFromEvent, isMobile, getRect } from '../utils';
 
 export function getPosFromEvent(art, event) {
     const { $progress } = art.template;
-    const { left } = $progress.getBoundingClientRect();
-    const eventLeft = event.pageX;
+    const { left } = getRect($progress);
+    const eventLeft = isMobile ? event.touches[0].clientX : event.clientX;
     const width = clamp(eventLeft - left, 0, $progress.clientWidth);
     const second = (width / $progress.clientWidth) * art.duration;
     const time = secondToTime(second);
@@ -11,18 +11,28 @@ export function getPosFromEvent(art, event) {
     return { second, time, width, percentage };
 }
 
+export function setCurrentTime(art, event) {
+    if (art.isRotate) {
+        const percentage = event.touches[0].clientY / art.height;
+        const second = percentage * art.duration;
+        art.emit('setBar', 'played', percentage, event);
+        art.seek = second;
+    } else {
+        const { second, percentage } = getPosFromEvent(art, event);
+        art.emit('setBar', 'played', percentage, event);
+        art.seek = second;
+    }
+}
+
 export default function progress(options) {
     return (art) => {
-        const {
-            icons,
-            option,
-            events: { proxy },
-        } = art;
+        const { icons, option, proxy } = art;
 
         return {
             ...options,
             html: `
                 <div class="art-control-progress-inner">
+                    <div class="art-progress-hover"></div>
                     <div class="art-progress-loaded"></div>
                     <div class="art-progress-played"></div>
                     <div class="art-progress-highlight"></div>
@@ -31,43 +41,26 @@ export default function progress(options) {
                 </div>
             `,
             mounted: ($control) => {
+                let tipTimer = null;
                 let isDroging = false;
+
+                const $hover = query('.art-progress-hover', $control);
                 const $loaded = query('.art-progress-loaded', $control);
                 const $played = query('.art-progress-played', $control);
                 const $highlight = query('.art-progress-highlight', $control);
                 const $indicator = query('.art-progress-indicator', $control);
                 const $tip = query('.art-progress-tip', $control);
 
-                setStyle($played, 'backgroundColor', 'var(--theme)');
-
-                let indicatorSize = art.constructor.INDICATOR_SIZE;
-
                 if (icons.indicator) {
-                    indicatorSize = art.constructor.INDICATOR_SIZE_ICON;
                     append($indicator, icons.indicator);
                 } else {
-                    setStyles($indicator, {
-                        backgroundColor: 'var(--theme)',
-                    });
+                    setStyle($indicator, 'backgroundColor', 'var(--art-theme)');
                 }
-
-                if (isMobile) {
-                    indicatorSize = art.constructor.INDICATOR_SIZE_MOBILE;
-                    if (icons.indicator) {
-                        indicatorSize = art.constructor.INDICATOR_SIZE_MOBILE_ICON;
-                    }
-                }
-
-                setStyles($indicator, {
-                    left: `-${indicatorSize / 2}px`,
-                    width: `${indicatorSize}px`,
-                    height: `${indicatorSize}px`,
-                });
 
                 function showHighlight(event) {
                     const { width } = getPosFromEvent(art, event);
                     const { text } = event.target.dataset;
-                    $tip.innerHTML = text;
+                    $tip.innerText = text;
                     const tipWidth = $tip.clientWidth;
                     if (width <= tipWidth / 2) {
                         setStyle($tip, 'left', 0);
@@ -78,9 +71,9 @@ export default function progress(options) {
                     }
                 }
 
-                function showTime(event) {
-                    const { width, time } = getPosFromEvent(art, event);
-                    $tip.innerHTML = time;
+                function showTime(event, touch) {
+                    const { width, time } = touch || getPosFromEvent(art, event);
+                    $tip.innerText = time;
                     const tipWidth = $tip.clientWidth;
                     if (width <= tipWidth / 2) {
                         setStyle($tip, 'left', 0);
@@ -91,55 +84,78 @@ export default function progress(options) {
                     }
                 }
 
-                function setBar(type, percentage) {
+                function updateHighlight() {
+                    $highlight.innerText = '';
+                    for (let index = 0; index < option.highlight.length; index++) {
+                        const item = option.highlight[index];
+                        const left = (clamp(item.time, 0, art.duration) / art.duration) * 100;
+                        const html = `<span data-text="${item.text}" data-time="${item.time}" style="left: ${left}%"></span>`;
+                        append($highlight, html);
+                    }
+                }
+
+                function setBar(type, percentage, event) {
+                    const isMobileDroging = type === 'played' && event && isMobile;
+
                     if (type === 'loaded') {
                         setStyle($loaded, 'width', `${percentage * 100}%`);
                     }
 
+                    if (type === 'hover') {
+                        setStyle($hover, 'width', `${percentage * 100}%`);
+                    }
+
                     if (type === 'played') {
                         setStyle($played, 'width', `${percentage * 100}%`);
-                        setStyle($indicator, 'left', `calc(${percentage * 100}% - ${indicatorSize / 2}px)`);
+                        setStyle($indicator, 'left', `${percentage * 100}%`);
+                    }
+
+                    if (isMobileDroging) {
+                        setStyle($tip, 'display', 'flex');
+                        const width = $control.clientWidth * percentage;
+                        const time = secondToTime(percentage * art.duration);
+                        showTime(event, { width, time });
+                        clearTimeout(tipTimer);
+                        tipTimer = setTimeout(() => {
+                            setStyle($tip, 'display', 'none');
+                        }, 500);
                     }
                 }
 
-                for (let index = 0; index < option.highlight.length; index++) {
-                    const item = option.highlight[index];
-                    const left = (clamp(item.time, 0, art.duration) / art.duration) * 100;
-                    append(
-                        $highlight,
-                        `<span data-text="${item.text}" data-time="${item.time}" style="left: ${left}%"></span>`,
-                    );
-                }
-
-                setBar('loaded', art.loaded);
-
-                art.on('setBar', (type, percentage) => {
-                    setBar(type, percentage);
-                });
+                art.on('setBar', setBar);
+                art.on('video:loadedmetadata', updateHighlight);
 
                 art.on('video:progress', () => {
-                    setBar('loaded', art.loaded);
+                    art.emit('setBar', 'loaded', art.loaded);
                 });
 
-                art.on('video:timeupdate', () => {
-                    setBar('played', art.played);
-                });
+                if (art.constructor.USE_RAF) {
+                    art.on('raf', () => {
+                        art.emit('setBar', 'played', art.played);
+                    });
+                } else {
+                    art.on('video:timeupdate', () => {
+                        art.emit('setBar', 'played', art.played);
+                    });
+                }
 
                 art.on('video:ended', () => {
-                    setBar('played', 1);
+                    art.emit('setBar', 'played', 1);
                 });
+
+                art.emit('setBar', 'loaded', art.loaded || 0);
 
                 if (!isMobile) {
                     proxy($control, 'click', (event) => {
                         if (event.target !== $indicator) {
-                            const { second, percentage } = getPosFromEvent(art, event);
-                            setBar('played', percentage);
-                            art.seek = second;
+                            setCurrentTime(art, event);
                         }
                     });
 
                     proxy($control, 'mousemove', (event) => {
-                        setStyle($tip, 'display', 'block');
+                        const { percentage } = getPosFromEvent(art, event);
+                        art.emit('setBar', 'hover', percentage, event);
+                        setStyle($tip, 'display', 'flex');
                         if (includeFromEvent(event, $highlight)) {
                             showHighlight(event);
                         } else {
@@ -147,23 +163,24 @@ export default function progress(options) {
                         }
                     });
 
-                    proxy($control, 'mouseout', () => {
+                    proxy($control, 'mouseleave', (event) => {
                         setStyle($tip, 'display', 'none');
+                        art.emit('setBar', 'hover', 0, event);
                     });
 
-                    proxy($indicator, 'mousedown', () => {
-                        isDroging = true;
+                    proxy($control, 'mousedown', (event) => {
+                        isDroging = event.button === 0;
                     });
 
-                    proxy(document, 'mousemove', (event) => {
+                    art.on('document:mousemove', (event) => {
                         if (isDroging) {
                             const { second, percentage } = getPosFromEvent(art, event);
-                            setBar('played', percentage);
+                            art.emit('setBar', 'played', percentage, event);
                             art.seek = second;
                         }
                     });
 
-                    proxy(document, 'mouseup', () => {
+                    art.on('document:mouseup', () => {
                         if (isDroging) {
                             isDroging = false;
                         }

@@ -8,28 +8,34 @@ export default function urlMix(art) {
 
     def(art, 'url', {
         get() {
-            return $video.currentSrc;
+            return $video.src;
         },
-        set(url) {
-            const typeName = option.type || getExt(url);
-            const typeCallback = option.customType[typeName];
-            if (typeName && typeCallback) {
-                sleep().then(() => {
+        async set(newUrl) {
+            if (newUrl) {
+                const oldUrl = art.url;
+                const typeName = option.type || getExt(newUrl);
+                const typeCallback = option.customType[typeName];
+
+                if (typeName && typeCallback) {
+                    await sleep();
                     art.loading.show = true;
-                    typeCallback.call(art, $video, url, art);
-                });
-            } else {
-                if (art.url && art.url !== url) {
-                    art.once('video:canplay', () => {
-                        if (art.isReady) {
-                            art.emit('restart');
-                        }
-                    });
+                    typeCallback.call(art, $video, newUrl, art);
+                } else {
+                    URL.revokeObjectURL(oldUrl);
+                    $video.src = newUrl;
                 }
 
-                $video.src = url;
-                art.option.url = url;
-                art.emit('url', url);
+                if (oldUrl !== art.url) {
+                    art.option.url = newUrl;
+                    if (art.isReady && oldUrl) {
+                        art.once('video:canplay', () => {
+                            art.emit('restart', newUrl);
+                        });
+                    }
+                }
+            } else {
+                await sleep();
+                art.loading.show = true;
             }
         },
     });

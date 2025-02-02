@@ -1,38 +1,40 @@
-import { inverseClass, queryAll } from '../utils';
-
 export default function playbackRate(art) {
-    const { i18n, icons, constructor } = art;
+    const {
+        i18n,
+        icons,
+        constructor: { SETTING_ITEM_WIDTH, PLAYBACK_RATE },
+    } = art;
 
     function getI18n(value) {
-        return value === 1.0 ? i18n.get('Normal') : value;
+        return value === 1.0 ? i18n.get('Normal') : value.toFixed(1);
     }
 
-    function update($panel, $tooltip, value) {
-        if ($tooltip) $tooltip.innerText = getI18n(value);
-        const $current = queryAll('.art-setting-item', $panel).find((item) => Number(item.dataset.value) === value);
-        if ($current) inverseClass($current, 'art-current');
+    function update() {
+        const target = art.setting.find(`playback-rate-${art.playbackRate}`);
+        art.setting.check(target);
     }
 
     return {
-        width: constructor.SETTING_ITEM_WIDTH,
+        width: SETTING_ITEM_WIDTH,
+        name: 'playback-rate',
         html: i18n.get('Play Speed'),
         tooltip: getI18n(art.playbackRate),
         icon: icons.playbackRate,
-        selector: [0.5, 0.75, 1.0, 1.25, 1.5, 2.0].map((item) => {
+        selector: PLAYBACK_RATE.map((item) => {
             return {
                 value: item,
+                name: `playback-rate-${item}`,
                 default: item === art.playbackRate,
                 html: getI18n(item),
             };
         }),
         onSelect(item) {
             art.playbackRate = item.value;
+            return item.html;
         },
-        mounted: ($panel, item) => {
-            update($panel, item._$tooltip, art.playbackRate);
-            art.on('playbackRate', () => {
-                update($panel, item._$tooltip, art.playbackRate);
-            });
+        mounted: () => {
+            update();
+            art.on('video:ratechange', () => update());
         },
     };
 }

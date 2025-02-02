@@ -6,10 +6,12 @@ const s = 'string';
 const n = 'number';
 const o = 'object';
 const f = 'function';
-const r = 'regexp';
 
 function validElement(value, type, paths) {
-    return errorHandle(type === s || value instanceof Element, `${paths.join('.')} require '${s}' or 'Element' type`);
+    return errorHandle(
+        type === s || type === n || value instanceof Element,
+        `${paths.join('.')} require '${s}' or 'Element' type`,
+    );
 }
 
 export const ComponentOption = {
@@ -20,17 +22,22 @@ export const ComponentOption = {
     style: `?${o}`,
     click: `?${f}`,
     mounted: `?${f}`,
-    tooltip: `?${s}`,
+    tooltip: `?${s}|${n}`,
     width: `?${n}`,
     selector: `?${a}`,
     onSelect: `?${f}`,
+    switch: `?${b}`,
+    onSwitch: `?${f}`,
+    range: `?${a}`,
+    onRange: `?${f}`,
+    onChange: `?${f}`,
 };
 
 export default {
+    id: s,
     container: validElement,
     url: s,
     poster: s,
-    title: s,
     type: s,
     theme: s,
     lang: s,
@@ -60,13 +67,9 @@ export default {
     fastForward: b,
     autoPlayback: b,
     autoOrientation: b,
-    ads: [
-        {
-            url: s,
-        },
-    ],
+    airplay: b,
+    proxy: `?${f}`,
     plugins: [f],
-    whitelist: [`${s}|${f}|${r}`],
     layers: [ComponentOption],
     contextmenu: [ComponentOption],
     settings: [ComponentOption],
@@ -99,14 +102,22 @@ export default {
         url: s,
         number: n,
         column: n,
+        width: n,
+        height: n,
+        scale: n,
     },
     subtitle: {
         url: s,
+        name: s,
         type: s,
         style: o,
+        escape: b,
         encoding: s,
+        onVttLoad: f,
     },
     moreVideoAttr: o,
+    i18n: o,
     icons: o,
+    cssVar: o,
     customType: o,
 };

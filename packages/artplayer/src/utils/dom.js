@@ -39,9 +39,9 @@ export function setStyle(element, key, value) {
 }
 
 export function setStyles(element, styles) {
-    Object.keys(styles).forEach((key) => {
+    for (const key in styles) {
         setStyle(element, key, styles[key]);
-    });
+    }
     return element;
 }
 
@@ -59,10 +59,11 @@ export function inverseClass(target, className) {
     addClass(target, className);
 }
 
-export function tooltip(target, msg, pos = 'up') {
+export function tooltip(target, msg, pos = 'top') {
     if (isMobile) return;
     target.setAttribute('aria-label', msg);
-    target.setAttribute('data-balloon-pos', pos);
+    addClass(target, 'hint--rounded');
+    addClass(target, `hint--${pos}`);
 }
 
 export function isInViewport(el, offset = 0) {
@@ -81,4 +82,82 @@ export function includeFromEvent(event, target) {
 export function replaceElement(newChild, oldChild) {
     oldChild.parentNode.replaceChild(newChild, oldChild);
     return newChild;
+}
+
+export function createElement(tag) {
+    return document.createElement(tag);
+}
+
+export function getIcon(key = '', html = '') {
+    const icon = createElement('i');
+    addClass(icon, 'art-icon');
+    addClass(icon, `art-icon-${key}`);
+    append(icon, html);
+    return icon;
+}
+
+export function setStyleText(id, style) {
+    let $style = document.getElementById(id);
+    if (!$style) {
+        $style = document.createElement('style');
+        $style.id = id;
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                document.head.appendChild($style);
+            });
+        } else {
+            (document.head || document.documentElement).appendChild($style);
+        }
+    }
+    $style.textContent = style;
+}
+
+export function supportsFlex() {
+    const div = document.createElement('div');
+    div.style.display = 'flex';
+    return div.style.display === 'flex';
+}
+
+export function getRect(el) {
+    return el.getBoundingClientRect();
+}
+
+export function loadImg(url, scale) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+
+        img.onload = function () {
+            if (!scale || scale === 1) {
+                resolve(img);
+            } else {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = img.width * scale;
+                canvas.height = img.height * scale;
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+                canvas.toBlob((blob) => {
+                    const blobUrl = URL.createObjectURL(blob);
+                    const scaledImg = new Image();
+
+                    scaledImg.onload = function () {
+                        resolve(scaledImg);
+                    };
+
+                    scaledImg.onerror = function () {
+                        URL.revokeObjectURL(blobUrl);
+                        reject(new Error(`Image load failed: ${url}`));
+                    };
+
+                    scaledImg.src = blobUrl;
+                });
+            }
+        };
+
+        img.onerror = function () {
+            reject(new Error(`Image load failed: ${url}`));
+        };
+
+        img.src = url;
+    });
 }

@@ -2,7 +2,6 @@ import { setStyle, addClass, removeClass, hasClass } from '../utils';
 
 export default function autoOrientation(art) {
     const {
-        option,
         constructor,
         template: { $player, $video },
     } = art;
@@ -22,23 +21,22 @@ export default function autoOrientation(art) {
                     setStyle($player, 'transform-origin', '0 0');
                     setStyle($player, 'transform', `rotate(90deg) translate(0, -${viewWidth}px)`);
                     addClass($player, 'art-auto-orientation');
-                }, constructor.MOBILE_AUTO_ORIENTATION_TIME);
+                    art.isRotate = true;
+                    art.emit('resize');
+                }, constructor.AUTO_ORIENTATION_TIME);
             }
         } else {
             if (hasClass($player, 'art-auto-orientation')) {
-                setStyle($player, 'width', null);
-                setStyle($player, 'height', null);
-                setStyle($player, 'transform', null);
-                setStyle($player, 'transform-origin', null);
                 removeClass($player, 'art-auto-orientation');
-                art.aspectRatioReset = true;
-                art.autoSize = option.autoSize;
-                art.notice.show = '';
+                art.isRotate = false;
+                art.emit('resize');
             }
         }
     });
 
-    art.on('fullscreen', (state) => {
+    art.on('fullscreen', async (state) => {
+        if (!screen?.orientation?.lock) return;
+
         const lastOrientation = screen.orientation.type;
         if (state) {
             const { videoWidth, videoHeight } = $video;
@@ -48,15 +46,13 @@ export default function autoOrientation(art) {
                 (videoWidth < videoHeight && viewWidth > viewHeight)
             ) {
                 const oppositeOrientation = lastOrientation.startsWith('portrait') ? 'landscape' : 'portrait';
-                screen.orientation.lock(oppositeOrientation).then(() => {
-                    addClass($player, 'art-auto-orientation-fullscreen');
-                });
+                await screen.orientation.lock(oppositeOrientation);
+                addClass($player, 'art-auto-orientation-fullscreen');
             }
         } else {
             if (hasClass($player, 'art-auto-orientation-fullscreen')) {
-                screen.orientation.lock(lastOrientation).then(() => {
-                    removeClass($player, 'art-auto-orientation-fullscreen');
-                });
+                await screen.orientation.lock(lastOrientation);
+                removeClass($player, 'art-auto-orientation-fullscreen');
             }
         }
     });

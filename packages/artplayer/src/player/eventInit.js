@@ -7,7 +7,7 @@ export default function eventInit(art) {
         notice,
         option,
         constructor,
-        events: { proxy },
+        proxy,
         template: { $player, $video, $poster },
     } = art;
 
@@ -60,22 +60,20 @@ export default function eventInit(art) {
         }
     });
 
-    art.on('video:error', () => {
+    art.on('video:error', async (error) => {
         if (reconnectTime < constructor.RECONNECT_TIME_MAX) {
-            sleep(constructor.RECONNECT_SLEEP_TIME).then(() => {
-                reconnectTime += 1;
-                art.url = option.url;
-                notice.show = `${i18n.get('Reconnect')}: ${reconnectTime}`;
-                art.emit('error', reconnectTime);
-            });
+            await sleep(constructor.RECONNECT_SLEEP_TIME);
+            reconnectTime += 1;
+            art.url = option.url;
+            notice.show = `${i18n.get('Reconnect')}: ${reconnectTime}`;
+            art.emit('error', error, reconnectTime);
         } else {
+            art.mask.show = true;
             art.loading.show = false;
-            art.controls.show = false;
+            art.controls.show = true;
             addClass($player, 'art-error');
-            sleep(constructor.RECONNECT_SLEEP_TIME).then(() => {
-                notice.show = i18n.get('Video Load Failed');
-                art.destroy(false);
-            });
+            await sleep(constructor.RECONNECT_SLEEP_TIME);
+            notice.show = i18n.get('Video Load Failed');
         }
     });
 
@@ -83,8 +81,8 @@ export default function eventInit(art) {
 
     // });
 
-    art.once('video:loadedmetadata', () => {
-        art.autoSize = option.autoSize;
+    art.on('video:loadedmetadata', () => {
+        art.emit('resize');
         if (isMobile) {
             art.loading.show = false;
             art.controls.show = true;
@@ -94,6 +92,8 @@ export default function eventInit(art) {
 
     art.on('video:loadstart', () => {
         art.loading.show = true;
+        art.mask.show = false;
+        art.controls.show = true;
     });
 
     art.on('video:pause', () => {
@@ -110,9 +110,11 @@ export default function eventInit(art) {
         art.mask.show = false;
     });
 
-    // art.on('video:progress', () => {
-
-    // });
+    art.on('video:progress', () => {
+        if (art.playing) {
+            art.loading.show = false;
+        }
+    });
 
     // art.on('video:ratechange', () => {
 
@@ -120,10 +122,12 @@ export default function eventInit(art) {
 
     art.on('video:seeked', () => {
         art.loading.show = false;
+        art.mask.show = true;
     });
 
     art.on('video:seeking', () => {
         art.loading.show = true;
+        art.mask.show = false;
     });
 
     // art.on('video:stalled', () => {
@@ -144,5 +148,6 @@ export default function eventInit(art) {
 
     art.on('video:waiting', () => {
         art.loading.show = true;
+        art.mask.show = false;
     });
 }

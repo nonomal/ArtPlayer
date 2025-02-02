@@ -1,14 +1,16 @@
-import { hasClass, addClass, removeClass, append, setStyles, tooltip, getStyle, inverseClass } from './dom';
+import { remove, append, tooltip, hasClass, addClass, setStyles, removeClass, createElement } from './dom';
+import { errorHandle } from './error';
 import validator from 'option-validator';
 import { ComponentOption } from '../scheme';
-import { has, def } from './property';
-import { errorHandle } from './error';
 
 export default class Component {
     constructor(art) {
         this.id = 0;
         this.art = art;
+        this.cache = new Map();
         this.add = this.add.bind(this);
+        this.remove = this.remove.bind(this);
+        this.update = this.update.bind(this);
     }
 
     get show() {
@@ -26,23 +28,21 @@ export default class Component {
         this.art.emit(this.name, value);
     }
 
-    set toggle(value) {
-        if (value) {
-            this.show = !this.show;
-        }
+    toggle() {
+        this.show = !this.show;
     }
 
     add(getOption) {
         const option = typeof getOption === 'function' ? getOption(this.art) : getOption;
         option.html = option.html || '';
         validator(option, ComponentOption);
-
         if (!this.$parent || !this.name || option.disable) return;
         const name = option.name || `${this.name}${this.id}`;
-        errorHandle(!has(this, name), `Cannot add an existing name [${name}] to the [${this.name}]`);
+        const item = this.cache.get(name);
+        errorHandle(!item, `Can't add an existing [${name}] to the [${this.name}]`);
 
         this.id += 1;
-        const $ref = document.createElement('div');
+        const $ref = createElement('div');
         addClass($ref, `art-${this.name}`);
         addClass($ref, `art-${this.name}-${name}`);
 
@@ -67,78 +67,52 @@ export default class Component {
             tooltip($ref, option.tooltip);
         }
 
+        const events = [];
         if (option.click) {
-            this.art.events.proxy($ref, 'click', (event) => {
+            const destroyEvent = this.art.events.proxy($ref, 'click', (event) => {
                 event.preventDefault();
                 option.click.call(this.art, this, event);
             });
+            events.push(destroyEvent);
         }
 
         if (option.selector && ['left', 'right'].includes(option.position)) {
-            this.selector(option, $ref);
+            this.selector(option, $ref, events);
         }
+
+        this[name] = $ref;
+        this.cache.set(name, { $ref, events, option });
 
         if (option.mounted) {
             option.mounted.call(this.art, $ref);
         }
 
-        if ($ref.childNodes.length === 1 && $ref.childNodes[0].nodeType === 3) {
-            addClass($ref, 'art-control-onlyText');
-        }
-
-        def(this, name, {
-            value: $ref,
-        });
-
         return $ref;
     }
 
-    selector(option, $ref) {
-        const { hover, proxy } = this.art.events;
+    remove(name) {
+        const item = this.cache.get(name);
+        errorHandle(item, `Can't find [${name}] from the [${this.name}]`);
 
-        addClass($ref, 'art-control-selector');
-        const $value = document.createElement('div');
-        addClass($value, 'art-selector-value');
-        append($value, option.html);
-        $ref.innerText = '';
-        append($ref, $value);
+        if (item.option.beforeUnmount) {
+            item.option.beforeUnmount.call(this.art, item.$ref);
+        }
 
-        const list = option.selector
-            .map(
-                (item, index) =>
-                    `<div class="art-selector-item ${item.default ? 'art-current' : ''}" data-index="${index}">${
-                        item.html
-                    }</div>`,
-            )
-            .join('');
-        const $list = document.createElement('div');
-        addClass($list, 'art-selector-list');
-        append($list, list);
-        append($ref, $list);
+        for (let index = 0; index < item.events.length; index++) {
+            this.art.events.remove(item.events[index]);
+        }
 
-        const setLeft = () => {
-            const left = getStyle($ref, 'width') / 2 - getStyle($list, 'width') / 2;
-            $list.style.left = `${left}px`;
-        };
+        this.cache.delete(name);
+        delete this[name];
+        remove(item.$ref);
+    }
 
-        hover($ref, setLeft);
-
-        proxy($list, 'click', async (event) => {
-            const path = event.composedPath() || [];
-            const $item = path.find((item) => hasClass(item, 'art-selector-item'));
-            if (!$item) return;
-            inverseClass($item, 'art-current');
-            const index = Number($item.dataset.index);
-            const find = option.selector[index] || {};
-            $value.innerText = $item.innerText;
-            if (option.onSelect) {
-                const result = await option.onSelect.call(this.art, find, $item, event);
-                if (typeof result === 'string' || typeof result === 'number') {
-                    $value.innerHTML = result;
-                }
-            }
-            setLeft();
-            this.art.emit('selector', find, $item);
-        });
+    update(option) {
+        const item = this.cache.get(option.name);
+        if (item) {
+            option = Object.assign(item.option, option);
+            this.remove(option.name);
+        }
+        return this.add(option);
     }
 }

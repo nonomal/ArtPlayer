@@ -5,17 +5,16 @@ export default class Info extends Component {
     constructor(art) {
         super(art);
         this.name = 'info';
-        art.once('video:loadedmetadata', () => {
-            if (!isMobile) {
-                this.init();
-            }
-        });
+
+        if (!isMobile) {
+            this.init();
+        }
     }
 
     init() {
         const {
+            proxy,
             constructor,
-            events: { proxy },
             template: { $infoPanel, $infoClose, $video },
         } = this.art;
 
@@ -25,10 +24,7 @@ export default class Info extends Component {
 
         let timer = null;
         const $types = queryAll('[data-video]', $infoPanel) || [];
-
-        this.art.on('destroy', () => {
-            clearTimeout(timer);
-        });
+        this.art.on('destroy', () => clearTimeout(timer));
 
         function loop() {
             for (let index = 0; index < $types.length; index++) {

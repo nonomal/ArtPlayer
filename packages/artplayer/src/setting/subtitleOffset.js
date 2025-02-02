@@ -1,37 +1,21 @@
-import { inverseClass, queryAll } from '../utils';
-
 export default function subtitleOffset(art) {
     const { i18n, icons, constructor } = art;
 
-    function getI18n(value) {
-        return value === 0 ? i18n.get('Normal') : value;
-    }
-
-    function update($panel, $tooltip, value) {
-        if ($tooltip) $tooltip.innerText = getI18n(value);
-        const $current = queryAll('.art-setting-item', $panel).find((item) => Number(item.dataset.value) === value);
-        if ($current) inverseClass($current, 'art-current');
-    }
-
     return {
         width: constructor.SETTING_ITEM_WIDTH,
+        name: 'subtitle-offset',
         html: i18n.get('Subtitle Offset'),
-        tooltip: getI18n(art.subtitleOffset),
         icon: icons.subtitle,
-        selector: [-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5].map((item) => {
-            return {
-                value: item,
-                default: item === art.subtitleOffset,
-                html: getI18n(item),
-            };
-        }),
-        onSelect(item) {
-            art.subtitleOffset = item.value;
+        tooltip: '0s',
+        range: [0, -10, 10, 0.1],
+        onChange(item) {
+            art.subtitleOffset = item.range[0];
+            return item.range[0] + 's';
         },
-        mounted: ($panel, item) => {
-            update($panel, item._$tooltip, art.subtitleOffset);
-            art.on('subtitleOffset', () => {
-                update($panel, item._$tooltip, art.subtitleOffset);
+        mounted: (_, item) => {
+            art.on('subtitleOffset', (value) => {
+                item.$range.value = value;
+                item.tooltip = value + 's';
             });
         },
     };

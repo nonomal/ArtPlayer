@@ -1,7 +1,6 @@
 var art = new Artplayer({
     container: '.artplayer-app',
     url: '/assets/sample/video.mp4',
-    title: 'Your Name',
     poster: '/assets/sample/poster.jpg',
     volume: 0.5,
     isLive: false,
@@ -24,30 +23,68 @@ var art = new Artplayer({
     backdrop: true,
     playsInline: true,
     autoPlayback: true,
+    airplay: true,
     theme: '#23ade5',
     lang: navigator.language.toLowerCase(),
-    whitelist: ['*'],
     moreVideoAttr: {
         crossOrigin: 'anonymous',
     },
     settings: [
         {
             width: 200,
-            html: 'Custom Setting',
-            tooltip: 'Click This',
-            icon: '<img width="22" heigth="22" src="/assets/img/indicator.svg">',
+            html: 'Subtitle',
+            tooltip: 'Bilingual',
+            icon: '<img width="22" heigth="22" src="/assets/img/subtitle.svg">',
             selector: [
                 {
-                    default: true,
-                    html: 'Setting 01',
+                    html: 'Display',
+                    tooltip: 'Show',
+                    switch: true,
+                    onSwitch: function (item) {
+                        item.tooltip = item.switch ? 'Hide' : 'Show';
+                        art.subtitle.show = !item.switch;
+                        return !item.switch;
+                    },
                 },
                 {
-                    html: 'Setting 02',
+                    default: true,
+                    html: 'Bilingual',
+                    url: '/assets/sample/subtitle.srt',
+                },
+                {
+                    html: 'Chinese',
+                    url: '/assets/sample/subtitle.cn.srt',
+                },
+                {
+                    html: 'Japanese',
+                    url: '/assets/sample/subtitle.jp.srt',
                 },
             ],
             onSelect: function (item) {
-                console.info('You clicked on the custom setting', item.html);
+                art.subtitle.switch(item.url, {
+                    name: item.html,
+                });
                 return item.html;
+            },
+        },
+        {
+            html: 'Switcher',
+            icon: '<img width="22" heigth="22" src="/assets/img/state.svg">',
+            tooltip: 'OFF',
+            switch: false,
+            onSwitch: function (item) {
+                item.tooltip = item.switch ? 'OFF' : 'ON';
+                console.info('You clicked on the custom switch', item.switch);
+                return !item.switch;
+            },
+        },
+        {
+            html: 'Slider',
+            icon: '<img width="22" heigth="22" src="/assets/img/state.svg">',
+            tooltip: '5x',
+            range: [5, 1, 10, 0.1],
+            onRange: function (item) {
+                return item.range[0] + 'x';
             },
         },
     ],
@@ -79,17 +116,18 @@ var art = new Artplayer({
         {
             default: true,
             html: 'SD 480P',
-            url: '/assets/sample/video.mp4',
+            url: '/assets/sample/video.mp4?q=480',
         },
         {
             html: 'HD 720P',
-            url: '/assets/sample/video.mp4',
+            url: '/assets/sample/video.mp4?q=720',
         },
     ],
     thumbnails: {
         url: '/assets/sample/thumbnails.png',
         number: 60,
         column: 10,
+        scale: 0.85,
     },
     subtitle: {
         url: '/assets/sample/subtitle.srt',
@@ -126,6 +164,11 @@ var art = new Artplayer({
         {
             position: 'right',
             html: 'Control',
+            index: 1,
+            tooltip: 'Control Tooltip',
+            style: {
+                marginRight: '20px',
+            },
             click: function () {
                 console.info('You clicked on the custom control');
             },
